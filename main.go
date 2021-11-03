@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 
 var templates = template.Must(template.ParseFiles("tmpl/edit.html", "tmpl/view.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
+var link = regexp.MustCompile("\\[([a-zA-Z0-9]+)\\]")
 
 type Page struct {
 	Title string
@@ -54,6 +56,10 @@ func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 		return
 	}
+	p.Body = link.ReplaceAllFunc(p.Body, func(b []byte) []byte {
+		match := b[1 : len(b)-1]
+		return []byte(fmt.Sprintf("<a href=\"/view/%s\">%s</a>", match, match))
+	})
 	renderTemplate(w, "view", p)
 }
 
